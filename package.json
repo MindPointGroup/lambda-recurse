@@ -2,7 +2,7 @@
   "name": "lambda-recurse",
   "version": "0.0.1",
   "description": "Recursively execute the current Lambda function until a user-defined condition is met",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
