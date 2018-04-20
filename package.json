@@ -1,6 +1,6 @@
 {
   "name": "lambda-recurse",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Recursively execute the current Lambda function until a user-defined condition is met",
   "main": "src/index.js",
   "scripts": {
