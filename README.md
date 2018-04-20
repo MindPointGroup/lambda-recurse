@@ -16,6 +16,50 @@ There are several use cases for invoking lambda recursively
 ## Installation
 `npm install lambda-recurse`
 
+You need to make sure that your lambda function at _least_ has permissions to invoke itself.
+
+A simple policy to allow for cloudwatch logs and to self invoke would look like
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogStream",
+                "lambda:InvokeFunction",
+                "lambda:InvokeAsync",
+                "logs:PutLogEvents"
+            ],
+            "Resource": [
+                "arn:aws:lambda:us-east-1:1234567890:function:myFunction",
+                "arn:aws:logs:*:*:*"
+            ]
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "cloudwatch:GetMetricStatistics",
+                "cloudwatch:Describe*",
+                "cloudwatch:ListMetrics"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "VisualEditor2",
+            "Effect": "Allow",
+            "Action": "logs:CreateLogGroup",
+            "Resource": "arn:aws:logs:*:*:*"
+        }
+    ]
+}
+```
+
+
+
 ## Usage
 
 This library is meant to be executed within Lambda, it probably wont work on your local workstation. You'll want to be sure to include `lambda-recurse` within your deployment zip file as [described by AWS here](https://docs.aws.amazon.com/lambda/latest/dg/nodejs-create-deployment-pkg.html) or you might find it easier to simply use something like [Serverless Framework](https://serverless.com/).
