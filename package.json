@@ -1,0 +1,24 @@
+{
+  "name": "lambda-recurse",
+  "version": "0.0.1",
+  "description": "Recursively execute the current Lambda function until a user-defined condition is met",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MindPointGroup/lambda-recurse.git"
+  },
+  "keywords": [
+    "aws",
+    "serverless",
+    "events"
+  ],
+  "author": "Jonathan Davila <@defionscode>",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/MindPointGroup/lambda-recurse/issues"
+  },
+  "homepage": "https://github.com/MindPointGroup/lambda-recurse#readme"
+}
