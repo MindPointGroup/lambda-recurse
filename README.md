@@ -111,6 +111,15 @@ exports.handler = (event, context, cb) => {
 }
 
 ```
+
+## Calculate approximate possible duration
+How long this will run will depend on a few factors:
+1. The timeout you have set on the particular function. [Lambda let's you do up to 5 minutes](https://docs.aws.amazon.com/lambda/latest/dg/limits.html).
+1. The value of `maxRecurse` => Maximum desired recursions
+1. The value of `maxTimeLeft`
+
+As a function it can be expressed as **maxRecurse** * **LambdaTimeoutValueMilliseconds** - (**maxTimeLeft** * **maxRecurse**) = **Approximate Total Duration in milliseconds**
+
 # Recurse Parameters
 
 ### **REQUIRED** => context
@@ -132,7 +141,7 @@ The maximum amount of times to recursively invoke your lambda function
 How long to wait before re-invoking `validator()`
 
 ### **OPTIONAL (default=10000)** => maxTimeLeft
-How long to wait before re-invoking `validator()`
+When there is `maxTimeLeft` left before the lambda function hits its timeout move on to `failFn` or trigger the next recursive call.
 
 ### **OPTIONAL (no default)** => payload
 If the core logic of your function depends on a payload pass it through here so that `recurse()` proxies it through to subsequent, recursive, calls.
