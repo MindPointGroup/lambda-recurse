@@ -5,6 +5,8 @@ const lambda = new AWS.Lambda()
 module.exports = ({context, payload, validator, interval,
   maxRecurse, successFn, failFn, maxTimeLeft}) => {
   let recursePayload = payload || { recurseAttempt: 1 }
+  if (!recursePayload.recurseAttempt) recursePayload.recurseAttempt = 1
+
   const recurseAttempt = recursePayload.recurseAttempt
   console.log(`Recursion: ${recurseAttempt}`)
   maxTimeLeft = maxTimeLeft || 10000
@@ -19,18 +21,17 @@ module.exports = ({context, payload, validator, interval,
 
   let timer
   const runner = async () => {
-    let done
-    try {
-      done = await validator()
-    } catch (error) {
-      throw error
-    }
+    const done = await validator()
+        .catch((error) => {
+          console.error('validator() Error')
+          throw error
+        })
     if (done) {
-      try {
-        await successFn()
-      } catch (error) {
-        throw error
-      }
+      await successFn()
+        .catch((error) => {
+          console.error('successFn() Error')
+          throw error
+        })
       clearInterval(timer)
     } else {
       const outOfTime = context.getRemainingTimeInMillis() < maxTimeLeft
@@ -38,12 +39,12 @@ module.exports = ({context, payload, validator, interval,
         console.log('Lambda execution environment out of time')
         if (recurseAttempt >= maxRecurse) {
           console.log('Max recursion level reached, failing...')
-          try {
-            await failFn()
-          } catch (error) {
-            console.error(error)
-            throw error
-          }
+          await failFn()
+            .catch((error) => {
+              console.error(error)
+              throw error
+            })
+
           clearInterval(timer)
         } else {
           console.log(`Retrying this lambda function: ${process.env.AWS_LAMBDA_FUNCTION_NAME}`)
