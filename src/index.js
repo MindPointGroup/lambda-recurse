@@ -51,7 +51,7 @@ module.exports = ({context, payload, validator, interval,
       }
     }
 
-    console.log('lambda-recurse: running timer()')
+    console.log('lambda-recurse: running timer()', validator)
     timer = setInterval(runner, interval)
   } catch (err) {
     console.error('lambda-recurse err: ', err)
