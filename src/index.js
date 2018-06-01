@@ -19,9 +19,11 @@ module.exports = ({context, payload, validator, interval,
     if (typeof (interval) !== 'number') throw new Error('interval must be a number')
     if (typeof (maxRecurse) !== 'number') throw new Error('maxRecurse must be a number')
     if (typeof (maxTimeLeft) !== 'number') throw new Error('maxRecurse must be a number')
+    console.log('lambda-recurse: args validated!')
 
     let timer
     const runner = async () => {
+      console.log('runner invoked')
       const done = await validator()
       if (done) {
         await successFn()
@@ -47,6 +49,7 @@ module.exports = ({context, payload, validator, interval,
         }
       }
     }
+
     console.log('lambda-recurse: running timer()')
     timer = setInterval(runner, interval)
   } catch (err) {
