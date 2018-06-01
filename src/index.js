@@ -23,7 +23,7 @@ module.exports = ({context, payload, validator, interval,
 
     let timer
     const runner = async () => {
-      console.log('runner invoked')
+      console.log('runner invoked', validator)
       const done = await validator()
       console.log('done got: ', done)
       if (done) {
