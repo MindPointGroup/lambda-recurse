@@ -25,6 +25,7 @@ module.exports = ({context, payload, validator, interval,
     const runner = async () => {
       console.log('runner invoked')
       const done = await validator()
+      console.log('done got: ', done)
       if (done) {
         await successFn()
         clearInterval(timer)
