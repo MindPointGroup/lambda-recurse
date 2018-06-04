@@ -23,9 +23,7 @@ module.exports = ({context, payload, validator, interval,
 
     let timer
     const runner = async () => {
-      console.log('runner invoked', validator)
       const done = await validator()
-      console.log('done got: ', done)
       if (done) {
         await successFn()
         clearInterval(timer)
@@ -35,6 +33,7 @@ module.exports = ({context, payload, validator, interval,
           console.log('Lambda execution environment out of time')
           if (recurseAttempt >= maxRecurse) {
             console.log('Max recursion level reached, failing...')
+            await failFn()
             clearInterval(timer)
           } else {
             console.log(`Retrying this lambda function: ${process.env.AWS_LAMBDA_FUNCTION_NAME}`)
@@ -51,8 +50,6 @@ module.exports = ({context, payload, validator, interval,
       }
     }
 
-    console.log('lambda-recurse: running timer()', typeof validator)
-    console.log(runner, interval)
     timer = setInterval(runner, interval)
   } catch (err) {
     console.error('lambda-recurse err: ', err)
