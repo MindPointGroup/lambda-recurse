@@ -4,7 +4,7 @@
   "description": "Recursively execute the current Lambda function until a user-defined condition is met",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tape ./test"
   },
   "repository": {
     "type": "git",
@@ -20,5 +20,11 @@
   "bugs": {
     "url": "https://github.com/MindPointGroup/lambda-recurse/issues"
   },
-  "homepage": "https://github.com/MindPointGroup/lambda-recurse#readme"
+  "homepage": "https://github.com/MindPointGroup/lambda-recurse#readme",
+  "devDependencies": {
+    "tape": "^4.9.1"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.249.1"
+  }
 }
