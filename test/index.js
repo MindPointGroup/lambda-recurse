@@ -4,6 +4,8 @@ process.env.DEBUG = true
 const recurse = require('..')
 const test = require('tape')
 
+const sleep = t => new Promise(resolve => setTimeout(resolve, t))
+
 class Context {
   constructor () {
     this.ms = 2000
@@ -38,21 +40,17 @@ class FakeLambda {
 
     context.reset()
 
-    const fn = this.fn
-
-    function promise () {
-      return new Promise(resolve => setTimeout(async () => {
-        const params = [JSON.parse(Payload), context]
-        const res = await fn(...params)
-        resolve({ Payload: JSON.stringify(res) })
-      }, 1))
+    const promise = async () => {
+      await sleep(Math.random() * 5e3) // simulate some latency
+      const res = await this.fn(JSON.parse(Payload), context)
+      return { Payload: JSON.stringify(res) }
     }
 
     return { promise }
   }
 }
 
-test('max recursion', async t => {
+test('failing - max recursion', async t => {
   const fn = async (event, context) => {
     let subject = false
 
@@ -95,7 +93,7 @@ test('max recursion', async t => {
   t.end()
 })
 
-test('resolved value', async t => {
+test('passing - resolved value', async t => {
   const fn = async (event, context) => {
     let subject = false
 
@@ -129,6 +127,67 @@ test('resolved value', async t => {
 
   const lambda = new FakeLambda(fn)
   const expected = { statusCode: 200, body: { success: true } }
+  t.deepEqual(await fn({}, context), expected)
+  t.end()
+})
+
+test('failing - defaults', async t => {
+  const fn = async (event, context) => {
+    let subject = false
+
+    setTimeout(() => {
+      subject = { success: true }
+    }, 5000)
+
+    const args = {
+      context,
+      payload: event,
+      validator: () => subject
+    }
+
+    try {
+      const data = await recurse(lambda, args)
+
+      return data.statusCode ? data : {
+        statusCode: 200,
+        body: data
+      }
+    } catch (err) {
+      return {
+        statusCode: 500,
+        body: err.message
+      }
+    }
+  }
+
+  const lambda = new FakeLambda(fn)
+  const expected = { statusCode: 500, body: 'Max recursion' }
+  t.deepEqual(await fn({}, context), expected)
+  t.end()
+})
+
+test('failing - validator throws, bubbles up and is caught', async t => {
+  const fn = async (event, context) => {
+    const args = {
+      context,
+      payload: event,
+      validator: () => {
+        throw new Error('Quxx')
+      }
+    }
+
+    try {
+      await recurse(lambda, args)
+    } catch (err) {
+      return {
+        statusCode: 500,
+        body: err.message
+      }
+    }
+  }
+
+  const lambda = new FakeLambda(fn)
+  const expected = { statusCode: 500, body: 'Quxx' }
   t.deepEqual(await fn({}, context), expected)
   t.end()
 })
