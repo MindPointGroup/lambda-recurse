@@ -23,8 +23,6 @@
   "homepage": "https://github.com/MindPointGroup/lambda-recurse#readme",
   "devDependencies": {
     "tape": "^4.9.1"
-  },
-  "dependencies": {
     "aws-sdk": "^2.249.1"
   }
 }
