@@ -1,58 +1,126 @@
-const AWS = require('aws-sdk')
 const process = require('process')
-const lambda = new AWS.Lambda()
 
-module.exports = ({context, payload, validator, interval,
-  maxRecurse, successFn, failFn, maxTimeLeft}) => {
-  try {
-    let recursePayload = payload || { recurseAttempt: 1 }
-    if (!recursePayload.recurseAttempt) recursePayload.recurseAttempt = 1
+const debug = process.env.DEBUG && (s => console.log(s))
 
-    const recurseAttempt = recursePayload.recurseAttempt
-    console.log(`Recursion: ${recurseAttempt}`)
-    maxTimeLeft = maxTimeLeft || 10000
-    interval = interval || 1000
-    maxRecurse = maxRecurse || 2
-    if (!(validator instanceof Function)) throw new Error('validator must be a function')
-    if (!(successFn instanceof Function)) throw new Error('successFn must be a function')
-    if (!(failFn instanceof Function)) throw new Error('failFn must be a function')
-    if (typeof (interval) !== 'number') throw new Error('interval must be a number')
-    if (typeof (maxRecurse) !== 'number') throw new Error('maxRecurse must be a number')
-    if (typeof (maxTimeLeft) !== 'number') throw new Error('maxRecurse must be a number')
-    console.log('lambda-recurse: args validated!')
+const die = e => {
+  debug(e.message)
+  throw e
+}
 
+module.exports = (lambda, args) => {
+  let {
+    context,
+    payload,
+    validator,
+    interval,
+    maxRecurse,
+    maxTimeLeft
+  } = args
+
+  const _ = {}
+
+  payload = payload || {}
+  const pl = payload._ || {}
+
+  _.maxTimeLeft = pl.maxTimeLeft || maxTimeLeft || 10000
+  _.interval = pl.interval || interval || 1000
+  _.maxRecurse = pl.maxRecurse || maxRecurse || 2
+  _.recurseAttempt = pl.recurseAttempt || 1
+
+  debug(`Recursion: ${JSON.stringify(_)}`)
+
+  if (!(validator instanceof Function)) {
+    die(new Error('validator must be a function'))
+  }
+
+  if (typeof (context) !== 'object') {
+    die(new Error('lambda context object required'))
+  }
+
+  return new Promise((resolve, reject) => {
     let timer
+
     const runner = async () => {
-      const done = await validator()
-      if (done) {
-        await successFn()
-        clearInterval(timer)
-      } else {
-        const outOfTime = context.getRemainingTimeInMillis() < maxTimeLeft
-        if (outOfTime) {
-          console.log('Lambda execution environment out of time')
-          if (recurseAttempt >= maxRecurse) {
-            console.log('Max recursion level reached, failing...')
-            await failFn()
-            clearInterval(timer)
-          } else {
-            console.log(`Retrying this lambda function: ${process.env.AWS_LAMBDA_FUNCTION_NAME}`)
-            recursePayload['recurseAttempt'] = Number(recurseAttempt) + 1
-            const params = {
-              InvocationType: 'Event',
-              FunctionName: process.env.AWS_LAMBDA_FUNCTION_NAME,
-              Payload: recursePayload ? JSON.stringify(payload) : undefined
-            }
-            await lambda.invoke(params).promise()
-            clearInterval(timer)
-          }
+      try {
+        //
+        // If the validator function returns a truthy value, we can call the
+        // resolve function and finish recursing. If it doesn't, keep trying.
+        //
+        const copy = Object.assign({}, payload)
+        delete copy._ // ensure our meta data is not passed to the validator.
+        const data = await validator(copy)
+
+        if (data) {
+          resolve(data)
+          clearInterval(timer)
+          return
         }
+      } catch (err) {
+        debug(`Validator error: ${err.message}`)
+        clearInterval(timer)
+        reject(err)
+        return
+      }
+
+      //
+      // Before recursing, check to see if max time has been exceeded.
+      // If not exceeded, return and the runner function will execute
+      // on the next tick.
+      //
+      const remaining = context.getRemainingTimeInMillis()
+      const outOfTime = remaining < _.maxTimeLeft
+
+      if (!outOfTime) return
+
+      debug('Lambda execution environment out of time')
+      clearInterval(timer)
+
+      //
+      // If we are out of time and we have reached the max number of
+      // times we should recurse, reject!
+      //
+      if (_.recurseAttempt >= _.maxRecurse) {
+        debug('max recursion')
+        reject(new Error('Max recursion'))
+        return
+      }
+
+      const functionName = process.env.AWS_LAMBDA_FUNCTION_NAME || 'test'
+
+      const attempt = parseInt(_.recurseAttempt, 10)
+      _.recurseAttempt = attempt + 1
+
+      debug(`Retrying ${functionName} function, ${attempt} attempts`)
+
+      //
+      // Recurse and forward the payload and call the lambda function by
+      // its name.
+      //
+      const params = {
+        InvocationType: 'Event',
+        FunctionName: functionName,
+        Payload: JSON.stringify(Object.assign({}, payload, { _ }))
+      }
+
+      debug(params)
+
+      try {
+        //
+        // The value returned in the Payload should be a parsable string.
+        //
+        const res = await lambda.invoke(params).promise()
+
+        if (res && res.Payload) {
+          resolve(JSON.parse(res.Payload))
+          return
+        }
+
+        reject(new Error('No data'))
+      } catch (err) {
+        reject(err)
       }
     }
 
-    timer = setInterval(runner, interval)
-  } catch (err) {
-    console.error('lambda-recurse err: ', err)
-    throw err
-  }
+    timer = setInterval(runner, _.interval)
+  })
 }
