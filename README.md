@@ -1,3 +1,8 @@
+[![CircleCI](https://circleci.com/gh/MindPointGroup/lambda-recurse.svg?style=svg)](https://circleci.com/gh/MindPointGroup/lambda-recurse)
+[![npm](https://img.shields.io/npm/dt/lambda-recurse.svg)](https://www.npmjs.com/package/lambda-recurse)
+![npm](https://img.shields.io/npm/l/lambda-recurse.svg)
+![npm](https://img.shields.io/npm/v/lambda-recurse.svg)
+
 # SYNOPSIS
 Make a lambda function recursively invoke itself until a user-defined state is
 met. Largely inspired by [this][0] blog post.
