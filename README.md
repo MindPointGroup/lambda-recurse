@@ -2,7 +2,7 @@
 Make a lambda function recursively invoke itself until a user-defined state is
 met. Largely inspired by [this][0] blog post.
 
-## MOTIVATION
+# MOTIVATION
 There are several use cases for invoking lambda recursively
 
 * **Long running compute tasks**
@@ -13,14 +13,14 @@ There are several use cases for invoking lambda recursively
     * a newly created RDS Database instance is ready
     * an importImage operation is complete
 
-## INSTALL
+# INSTALL
 `npm install lambda-recurse`
 
-## USAGE
+# USAGE
 You need to make sure that your lambda function at **least** has permissions to
 invoke itself.
 
-A simple policy to allow for cloudwatch logs and to self invoke would look like
+A simple policy to allow for cloudwatch logs and to self invoke...
 
 ```json
 {
@@ -75,40 +75,36 @@ const AWS = require('aws-sdk')
 const ec2 = new AWS.EC2({ region: 'us-east-1' })
 const lambda = new AWS.Lambda({ region: 'us-east-1' })
 
-exports.handler = (event, context, cb) => {
+exports.handler = (event, context) => {
   let payload = event
   
-  const interval = 5000 // time to wait between retries of validator()
-  const maxRecurse = 2 // max times to recursively call lambda (one-indexed)
-  const maxTimeLeft = 7000 // trigger recursion after this much time
-
   const validator = async (payload) => {
     //
     // Required: Define a function that will be used to determine
-    // completion. It should return true or false.
+    // completion. It should return a truthy or falsey value.
     //
     const params = {
     	Filters: [{ Name: 'tag:Name', Values: ['MyEc2Instance'] }]
     }
 
-    const data = await ec2.describeInstances(params).promise()
-
-    return data.Reservations.length === 1
+    try {
+      const data = await ec2.describeInstances(params).promise()
+      return data.Reservations.length === 1
+    } catch (err) {
+      throw err
+    }
   }
 
   try {
     const params = {
       context,
-      validator,
-      interval,
-      maxRecurse,
-      maxTimeLeft
+      validator
     }
 
     const data = recurse(lambda, params)
-    // ...do something with your data
+    // ...log or persist result
   } catch (err) {
-    // ...handle your error
+    // ...log or persist error
   }
 }
 ```
@@ -127,34 +123,41 @@ As a function it can be expressed as...
 Where **LambdaTimeout**, **maxTimeLeft**, and **ApproximateTotalDuration** are
 milliseconds.
 
-## PARAMATERS
+# OPTIONS
 
-### **REQUIRED** `context`
-Pass down the lambda context object as-is from within your handler
+#### **REQUIRED** `context`
+Pass down the lambda context object as-is from within your handler.
 
-### **REQUIRED** `validator`
+#### **REQUIRED** `validator`
 An `async` function that returns either `truthy` or `falsey`. This function
 determines completeness ie "is a node available? "did a processing job finish?",
 "is my DB ready to accept connections". It is passed the unadulterated payload.
 
-### **OPTIONAL** `maxRecurse (2)`
-The maximum amount of times to recursively invoke your lambda function
+#### **OPTIONAL** `maxRecurse (2)`
+The maximum amount of times to recursively invoke your lambda function.
 
-### **OPTIONAL** `interval (1000)`
-How long to wait before re-invoking `validator()`
+#### **OPTIONAL** `interval (1000)`
+How long to wait before re-invoking `validator()`.
 
-### **OPTIONAL** `maxTimeLeft (10000)`
+#### **OPTIONAL** `maxTimeLeft (10000)`
 When there is `maxTimeLeft` left before the lambda function hits its timeout or
 trigger the next recursive call.
 
-### **OPTIONAL** `payload`
+#### **OPTIONAL** `payload`
 If the core logic of your function depends on a payload pass it through here so
 that `recurse()` proxies it through to subsequent, recursive, calls.
 
+# TESTING
+Tests can be run with the `PROFILE` environment variable in order to tell the aws
+sdk which profile to use.
+
+```
+PROFILE=foobar npm run test
+```
+
 # ROADMAP
-- Testing (not sure how to best approach this yet)
-- Exponential backoff option for `validate()`
-- Make this compatible with other serverless providers
+- Exponential backoff option for `validate()`.
+- Make this compatible with other "serverless" providers.
 
 [0]:https://hackernoon.com/write-recursive-aws-lambda-functions-the-right-way-4a4b5ae633b6
 [1]:https://github.com/theburningmonk/lambda-recursive-s3-demo/blob/master/batch-processor.js
