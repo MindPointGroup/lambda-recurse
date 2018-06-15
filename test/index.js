@@ -247,7 +247,7 @@ test('Passing - create and invoke a long running function that eventually create
   // all of this should happen in under 30 seconds because the lambda has a timeout of
   // 0.25 seconds and the maximum level of recursion is set to three.
   //
-  await sleep(6e4)
+  await sleep(6e4 + 3e4)
 
   const {
     err: errTopicExists,
@@ -312,7 +312,7 @@ test('failing - create and invoke a long running function who\'s failure eventua
   // all of this should happen in under 30 seconds because the lambda has a timeout of
   // 0.25 seconds and the maximum level of recursion is set to three.
   //
-  await sleep(6e4)
+  await sleep(6e4 + 3e4)
 
   const {
     err: errTopicExists,
