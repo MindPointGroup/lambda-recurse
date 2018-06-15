@@ -4,7 +4,8 @@
   "description": "Recursively execute the current Lambda function until a user-defined condition is met",
   "main": "src/index.js",
   "scripts": {
-    "test": "tape ./test"
+    "test": "tape ./test",
+    "lint": "standard ./src ./test"
   },
   "repository": {
     "type": "git",
