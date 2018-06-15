@@ -17,14 +17,14 @@ module.exports = async (event, context) => {
     // Sleep longer than the interval
     // in order to force an invocation.
     //
-    await sleep(2000)
+    await sleep(3e4)
   }
 
   const args = {
     context,
     payload: event,
     validator,
-    interval: 1000,
+    interval: 3e4,
     maxRecurse: 3,
     maxTimeLeft: 100
   }
