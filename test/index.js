@@ -241,13 +241,13 @@ test('Passing - create and invoke a long running function that eventually create
   t.ok(!errInvokeFunction, errInvokeFunction && errInvokeFunction.message)
   t.ok(dataInvokeFunction, 'function was invoked')
 
-  t.comment('waiting for 3e4 (ms)')
+  t.comment('waiting for 6e4 (ms) for the function to complete')
 
   //
   // all of this should happen in under 30 seconds because the lambda has a timeout of
   // 0.25 seconds and the maximum level of recursion is set to three.
   //
-  await sleep(3e4)
+  await sleep(6e4)
 
   const {
     err: errTopicExists,
@@ -306,13 +306,13 @@ test('failing - create and invoke a long running function who\'s failure eventua
   t.ok(!errInvokeFunction, errInvokeFunction && errInvokeFunction.message)
   t.ok(dataInvokeFunction, 'function was invoked')
 
-  t.comment('waiting for 3e4 (ms)')
+  t.comment('waiting for 6e4 (ms) for the function to complete')
 
   //
   // all of this should happen in under 30 seconds because the lambda has a timeout of
   // 0.25 seconds and the maximum level of recursion is set to three.
   //
-  await sleep(3e4)
+  await sleep(6e4)
 
   const {
     err: errTopicExists,

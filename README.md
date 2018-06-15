@@ -133,9 +133,9 @@ milliseconds.
 Pass down the lambda context object as-is from within your handler
 
 ### **REQUIRED** `validator`
-An `async` function that returns either `true` or `false`. Use this function to
-determine completeness ie "is a node available? "did a processing job finish?",
-"is my DB ready to accept connections".
+An `async` function that returns either `truthy` or `falsey`. This function
+determines completeness ie "is a node available? "did a processing job finish?",
+"is my DB ready to accept connections". It is passed the unadulterated payload.
 
 ### **OPTIONAL** `maxRecurse (2)`
 The maximum amount of times to recursively invoke your lambda function

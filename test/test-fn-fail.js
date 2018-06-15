@@ -9,7 +9,10 @@ const sleep = t => new Promise(resolve => setTimeout(resolve, t))
 
 module.exports = async (event, context) => {
   const validator = async p => {
-    if (event._ && event._.recurseAttempt > 2) {
+    if (event._ && event._.recurseAttempt > 4) {
+      //
+      // This will never be reached...
+      //
       return { success: true }
     }
 
@@ -17,14 +20,14 @@ module.exports = async (event, context) => {
     // Sleep longer than the interval
     // in order to force an invocation.
     //
-    await sleep(2000)
+    await sleep(3e4)
   }
 
   const args = {
     context,
     payload: event,
     validator,
-    interval: 1000,
+    interval: 3e4,
     maxRecurse: 3,
     maxTimeLeft: 100
   }
@@ -32,6 +35,10 @@ module.exports = async (event, context) => {
   try {
     await recurse(lambda, args)
   } catch (err) {
+    //
+    // The expected outcome is that the meta-data in the forwarded payload
+    // shows the total recursion attemps to exceed the maximum allowed.
+    //
     if (err.message === 'Max recursion') {
       await sns.deleteTopic({ TopicArn: event.topicArn }).promise()
     }
