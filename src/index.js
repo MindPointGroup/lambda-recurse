@@ -1,6 +1,6 @@
 const process = require('process')
 
-const debug = process.env.DEBUG && (s => console.log(s))
+const debug = process.env.DEBUG ? s => console.log(s) : () => {}
 
 const die = e => {
   debug(e.message)
